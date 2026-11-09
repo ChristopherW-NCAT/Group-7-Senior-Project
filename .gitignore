@@ -1,0 +1,7 @@
+build/
+install/
+log/
+.idea/
+cmake-build-*/
+__pycache__/
+*.pyc

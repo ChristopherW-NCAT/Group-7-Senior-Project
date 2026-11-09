@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="demo_world">
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><plane><normal>0 0 1</normal><size>50 50</size></plane></geometry></collision>
+        <visual name="v"><geometry><plane><normal>0 0 1</normal><size>50 50</size></plane></geometry></visual>
+      </link>
+    </model>
+    <model name="camera_rig">
+      <static>true</static>
+      <pose>0 0 1.4 0 0 0</pose>
+      <link name="camera_link">
+        <sensor name="rgb_camera" type="camera">
+          <always_on>true</always_on>
+          <update_rate>30.0</update_rate>
+          <visualize>true</visualize>
+          <topic>camera/image_raw</topic>
+          <camera name="main_cam">
+            <horizontal_fov>1.2217</horizontal_fov>
+            <image><width>640</width><height>640</height><format>R8G8B8</format></image>
+            <clip><near>0.1</near><far>30.0</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="yellow_box_left">
+      <static>true</static><pose>3.5 1.0 0.5 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>0.8 0.8 1.0</size></box></geometry></visual></link>
+    </model>
+    <model name="red_cylinder_center">
+      <static>true</static><pose>2.0 0.0 0.6 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><cylinder><radius>0.3</radius><length>1.2</length></cylinder></geometry></visual></link>
+    </model>
+    <model name="green_box_right">
+      <static>true</static><pose>5.0 -1.0 0.75 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>0.8 0.8 1.5</size></box></geometry></visual></link>
+    </model>
+  </world>
+</sdf>
