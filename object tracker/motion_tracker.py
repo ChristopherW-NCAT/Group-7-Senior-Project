@@ -17,6 +17,11 @@ class MotionTrackerNode(Node):
         # Load MediaPipe EfficientDet model from the script directory
         script_dir = os.path.dirname(os.path.abspath(__file__))
         model_path = os.path.join(script_dir, 'efficientdet_lite0.tflite')
+        if not os.path.isfile(model_path):
+            raise FileNotFoundError(
+                f'Missing MediaPipe model file: {model_path}. '
+                'Place efficientdet_lite0.tflite in the object tracker/ folder.'
+            )
 
         base_options = python.BaseOptions(model_asset_path=model_path)
         options = vision.ObjectDetectorOptions(
@@ -36,14 +41,14 @@ class MotionTrackerNode(Node):
         self.get_logger().info('Motion tracker listening on /camera/image_raw')
 
     def on_image(self, msg: Image):
-        # Convert ROS Image buffer to RGB and BGR NumPy arrays without cv_bridge
-        raw = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, 3))
-        if msg.encoding == 'bgr8':
-            image_rgb = cv2.cvtColor(raw, cv2.COLOR_BGR2RGB)
-            frame_bgr = raw.copy()
+            # Convert ROS Image buffer to writable, contiguous RGB and BGR NumPy arrays
+        raw = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, -1))[:, :, :3]
+        if msg.encoding in ('bgr8', 'bgra8'):
+            image_rgb = np.ascontiguousarray(cv2.cvtColor(raw, cv2.COLOR_BGR2RGB))
+            frame_bgr = np.ascontiguousarray(raw.copy())
         else:
-            image_rgb = raw
-            frame_bgr = cv2.cvtColor(raw, cv2.COLOR_RGB2BGR)
+            image_rgb = np.ascontiguousarray(raw.copy())
+            frame_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
 
         h, w, _ = frame_bgr.shape
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
