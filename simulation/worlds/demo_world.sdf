@@ -1,51 +1,283 @@
 <?xml version="1.0" ?>
 <sdf version="1.9">
   <world name="demo_world">
+    
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
     <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>
+
     <light type="directional" name="sun">
-      <pose>0 0 10 0 0 0</pose>
-      <direction>-0.5 0.1 -0.9</direction>
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 15 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.4 0.2 -0.9</direction>
     </light>
-    <model name="ground_plane">
+
+    <!-- ================================================================= -->
+    <!-- 1. URBAN SURFACES: SIDEWALK (Z=0.0m) & SUNKEN ROAD (Z=-0.15m)     -->
+    <!-- ================================================================= -->
+
+    <!-- Sunken Asphalt Street Level (15cm Curb Drop-off on Right & Cross-Street) -->
+    <model name="asphalt_street_base">
       <static>true</static>
+      <pose>10 0 -0.15 0 0 0</pose>
       <link name="link">
-        <collision name="c"><geometry><plane><normal>0 0 1</normal><size>50 50</size></plane></geometry></collision>
-        <visual name="v"><geometry><plane><normal>0 0 1</normal><size>50 50</size></plane></geometry></visual>
+        <collision name="col"><geometry><plane><normal>0 0 1</normal><size>40 40</size></plane></geometry></collision>
+        <visual name="vis">
+          <geometry><plane><normal>0 0 1</normal><size>40 40</size></plane></geometry>
+          <material>
+            <ambient>0.18 0.18 0.20 1</ambient>
+            <diffuse>0.18 0.18 0.20 1</diffuse>
+          </material>
+        </visual>
       </link>
     </model>
-    <model name="camera_rig">
+
+    <!-- Main Concrete Sidewalk Slab (X=-2m to X=7.2m, Y=-0.75m Curb to Y=+3.0m Buildings) -->
+    <!-- Ends at X=7.2m to create a Cross-Street Curb Drop-off, and drops off on Right at Y=-0.75m -->
+    <model name="sidewalk_block_1">
+      <static>true</static>
+      <pose>2.6 1.125 -0.075 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>9.2 3.75 0.15</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>9.2 3.75 0.15</size></box></geometry>
+          <material>
+            <ambient>0.62 0.62 0.60 1</ambient>
+            <diffuse>0.62 0.62 0.60 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Far Sidewalk & Building Across the Intersecting Cross-Street (Starts at X=11.5m) -->
+    <model name="sidewalk_block_across_street">
+      <static>true</static>
+      <pose>15.0 1.125 -0.075 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>7.0 3.75 0.15</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>7.0 3.75 0.15</size></box></geometry>
+          <material>
+            <ambient>0.62 0.62 0.60 1</ambient>
+            <diffuse>0.62 0.62 0.60 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================================================================= -->
+    <!-- 2. WEARABLE CHEST RIG SENSOR (1.4m Height, Pitched 20 deg Down)   -->
+    <!-- ================================================================= -->
+    <model name="wearable_device">
       <static>true</static>
       <pose>0 0 1.4 0 0 0</pose>
       <link name="camera_link">
-        <sensor name="rgb_camera" type="camera">
+        <visual name="housing_visual">
+          <geometry><box><size>0.05 0.12 0.04</size></box></geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.2 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+
+        <sensor name="rgbd_camera" type="rgbd_camera">
+          <pose>0.025 0 0 0 0.349066 0</pose>
           <always_on>true</always_on>
           <update_rate>30.0</update_rate>
           <visualize>true</visualize>
-          <topic>camera/image_raw</topic>
-          <camera name="main_cam">
+          <topic>rgbd_camera</topic>
+          <camera name="wearable_cam">
             <horizontal_fov>1.2217</horizontal_fov>
-            <image><width>640</width><height>640</height><format>R8G8B8</format></image>
+            <image>
+              <width>640</width>
+              <height>640</height>
+              <format>R8G8B8</format>
+            </image>
             <clip><near>0.1</near><far>30.0</far></clip>
+            <depth_camera>
+              <clip><near>0.3</near><far>8.0</far></clip>
+            </depth_camera>
           </camera>
         </sensor>
       </link>
     </model>
-    <model name="yellow_box_left">
-      <static>true</static><pose>3.5 1.0 0.5 0 0 0</pose>
-      <link name="l"><visual name="v"><geometry><box><size>0.8 0.8 1.0</size></box></geometry></visual></link>
+
+    <!-- ================================================================= -->
+    <!-- 3. LEFT SIDE: JUTTING BUILDINGS, UNEVEN STEPS & SHOP AWNING       -->
+    <!-- ================================================================= -->
+    <model name="left_urban_buildings">
+      <static>true</static>
+      <link name="link">
+        <!-- Building 1 Wall (Recessed at Y=+1.6m) -->
+        <visual name="bldg1_wall">
+          <pose>2.0 2.1 2.5 0 0 0</pose>
+          <geometry><box><size>4.0 1.0 5.0</size></box></geometry>
+          <material><ambient>0.55 0.28 0.20 1</ambient><diffuse>0.55 0.28 0.20 1</diffuse></material>
+        </visual>
+        <collision name="bldg1_col"><pose>2.0 2.1 2.5 0 0 0</pose><geometry><box><size>4.0 1.0 5.0</size></box></geometry></collision>
+
+        <!-- Building 1 Stoop Steps Jutting Into Left Sidewalk (X=1.8m, Y=+1.05m) -->
+        <visual name="step_lower">
+          <pose>1.8 1.15 0.09 0 0 0</pose>
+          <geometry><box><size>1.2 0.9 0.18</size></box></geometry>
+          <material><ambient>0.5 0.5 0.5 1</ambient><diffuse>0.5 0.5 0.5 1</diffuse></material>
+        </visual>
+        <collision name="step_lower_col"><pose>1.8 1.15 0.09 0 0 0</pose><geometry><box><size>1.2 0.9 0.18</size></box></geometry></collision>
+
+        <visual name="step_upper">
+          <pose>1.8 1.35 0.27 0 0 0</pose>
+          <geometry><box><size>1.0 0.5 0.18</size></box></geometry>
+          <material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material>
+        </visual>
+        <collision name="step_upper_col"><pose>1.8 1.35 0.27 0 0 0</pose><geometry><box><size>1.0 0.5 0.18</size></box></geometry></collision>
+
+        <!-- Building 2 Jutting Out Further Into Sidewalk (X=4.0m to 7.2m, inner wall at Y=+1.15m) -->
+        <visual name="bldg2_jutting">
+          <pose>5.6 1.85 2.5 0 0 0</pose>
+          <geometry><box><size>3.2 1.4 5.0</size></box></geometry>
+          <material><ambient>0.48 0.46 0.42 1</ambient><diffuse>0.48 0.46 0.42 1</diffuse></material>
+        </visual>
+        <collision name="bldg2_col"><pose>5.6 1.85 2.5 0 0 0</pose><geometry><box><size>3.2 1.4 5.0</size></box></geometry></collision>
+
+        <!-- Bookstore Shop Sign / High Awning at Z=2.45m (Safe False-Positive Trap: > 1.90m head clearance) -->
+        <visual name="high_shop_awning">
+          <pose>3.2 0.85 2.45 0 0 0</pose>
+          <geometry><box><size>1.4 1.2 0.12</size></box></geometry>
+          <material><ambient>0.1 0.35 0.65 1</ambient><diffuse>0.1 0.35 0.65 1</diffuse></material>
+        </visual>
+        <collision name="high_shop_col"><pose>3.2 0.85 2.45 0 0 0</pose><geometry><box><size>1.4 1.2 0.12</size></box></geometry></collision>
+      </link>
     </model>
-    <model name="red_cylinder_center">
-      <static>true</static><pose>2.0 0.0 0.6 0 0 0</pose>
-      <link name="l"><visual name="v"><geometry><cylinder><radius>0.3</radius><length>1.2</length></cylinder></geometry></visual></link>
+
+    <!-- ================================================================= -->
+    <!-- 4. SCAFFOLDING WITH LOW CROSSBAR & SIDEWALK TRASH CLUTTER         -->
+    <!-- ================================================================= -->
+    <model name="city_scaffolding_and_clutter">
+      <static>true</static>
+      <link name="link">
+        <!-- Scaffolding Outer Support Pole on Left (X=2.4m, Y=+0.82m) -->
+        <visual name="scaff_pole_left">
+          <pose>2.4 0.82 1.25 0 0 0</pose>
+          <geometry><cylinder><radius>0.035</radius><length>2.5</length></cylinder></geometry>
+          <material><ambient>0.85 0.65 0.0 1</ambient><diffuse>0.85 0.65 0.0 1</diffuse></material>
+        </visual>
+        <collision name="scaff_pole_col"><pose>2.4 0.82 1.25 0 0 0</pose><geometry><cylinder><radius>0.035</radius><length>2.5</length></cylinder></geometry></collision>
+
+        <!-- LOW HANGING SCAFFOLD CROSSBAR (X=2.4m, Y=+0.45m, Z=1.64m Head Height!) -->
+        <!-- Floating bar with empty air below -> Triggers OVERHEAD hazard in LEFT/CENTER lane -->
+        <visual name="scaff_low_crossbar">
+          <pose>2.4 0.45 1.64 0 0 0</pose>
+          <geometry><box><size>0.08 0.85 0.08</size></box></geometry>
+          <material><ambient>0.95 0.50 0.0 1</ambient><diffuse>0.95 0.50 0.0 1</diffuse></material>
+        </visual>
+        <collision name="scaff_bar_col"><pose>2.4 0.45 1.64 0 0 0</pose><geometry><box><size>0.08 0.85 0.08</size></box></geometry></collision>
+
+        <!-- Sidewalk Trash Can & Trash Bags on Curb Edge (X=2.1m, Y=-0.52m Right Lane) -->
+        <visual name="trash_can">
+          <pose>2.1 -0.52 0.42 0 0 0</pose>
+          <geometry><cylinder><radius>0.22</radius><length>0.84</length></cylinder></geometry>
+          <material><ambient>0.15 0.30 0.18 1</ambient><diffuse>0.15 0.30 0.18 1</diffuse></material>
+        </visual>
+        <collision name="trash_can_col"><pose>2.1 -0.52 0.42 0 0 0</pose><geometry><cylinder><radius>0.22</radius><length>0.84</length></cylinder></geometry></collision>
+
+        <visual name="trash_bag_clutter">
+          <pose>1.75 -0.45 0.20 0 0 0</pose>
+          <geometry><sphere><radius>0.22</radius></sphere></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.15 0.15 0.15 1</diffuse></material>
+        </visual>
+        <collision name="trash_bag_col"><pose>1.75 -0.45 0.20 0 0 0</pose><geometry><sphere><radius>0.22</radius></sphere></geometry></collision>
+      </link>
     </model>
-    <model name="green_box_right">
-      <static>true</static><pose>5.0 -1.0 0.75 0 0 0</pose>
-      <link name="l"><visual name="v"><geometry><box><size>0.8 0.8 1.5</size></box></geometry></visual></link>
+
+    <!-- ================================================================= -->
+    <!-- 5. RIGHT CURB: STREET TREE, BASE GRATE/FENCE & LOW BRANCH         -->
+    <!-- ================================================================= -->
+    <model name="curb_tree_with_low_branch">
+      <static>true</static>
+      <link name="link">
+        <!-- Iron Tree Grate & Low Curb Fence Guard at Trunk Base (X=3.4m, Y=-0.55m) -->
+        <visual name="tree_base_fence">
+          <pose>3.4 -0.55 0.12 0 0 0</pose>
+          <geometry><box><size>0.75 0.75 0.24</size></box></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.25 0.25 0.25 1</diffuse></material>
+        </visual>
+        <collision name="tree_fence_col"><pose>3.4 -0.55 0.12 0 0 0</pose><geometry><box><size>0.75 0.75 0.24</size></box></geometry></collision>
+
+        <!-- Tree Trunk -->
+        <visual name="trunk">
+          <pose>3.4 -0.55 1.3 0 0 0</pose>
+          <geometry><cylinder><radius>0.14</radius><length>2.6</length></cylinder></geometry>
+          <material><ambient>0.38 0.24 0.12 1</ambient><diffuse>0.38 0.24 0.12 1</diffuse></material>
+        </visual>
+        <collision name="trunk_col"><pose>3.4 -0.55 1.3 0 0 0</pose><geometry><cylinder><radius>0.14</radius><length>2.6</length></cylinder></geometry></collision>
+
+        <!-- Low-Hanging Tree Branch Jutting Over the Sidewalk at Z=1.60m! -->
+        <visual name="low_branch">
+          <pose>3.1 -0.10 1.60 0.15 0 0</pose>
+          <geometry><box><size>0.14 0.95 0.12</size></box></geometry>
+          <material><ambient>0.20 0.45 0.15 1</ambient><diffuse>0.20 0.45 0.15 1</diffuse></material>
+        </visual>
+        <collision name="low_branch_col"><pose>3.1 -0.10 1.60 0.15 0 0</pose><geometry><box><size>0.14 0.95 0.12</size></box></geometry></collision>
+
+        <!-- Upper Tree Canopy -->
+        <visual name="canopy">
+          <pose>3.4 -0.45 2.9 0 0 0</pose>
+          <geometry><sphere><radius>1.1</radius></sphere></geometry>
+          <material><ambient>0.15 0.42 0.12 1</ambient><diffuse>0.15 0.42 0.12 1</diffuse></material>
+        </visual>
+      </link>
     </model>
+
+    <!-- ================================================================= -->
+    <!-- 6. PARKED VEHICLE IN SUNKEN ROAD (Y=-1.9m, Z=-0.15m)              -->
+    <!-- ================================================================= -->
+    <model name="road_vehicle_sedan">
+      <static>true</static>
+      <pose>4.2 -1.9 -0.15 0 0 0</pose>
+      <link name="link">
+        <visual name="chassis">
+          <pose>0 0 0.55 0 0 0</pose>
+          <geometry><box><size>4.2 1.75 0.85</size></box></geometry>
+          <material><ambient>0.15 0.25 0.55 1</ambient><diffuse>0.15 0.25 0.55 1</diffuse></material>
+        </visual>
+        <collision name="chassis_col"><pose>0 0 0.55 0 0 0</pose><geometry><box><size>4.2 1.75 0.85</size></box></geometry></collision>
+        <visual name="cabin">
+          <pose>-0.2 0 1.15 0 0 0</pose>
+          <geometry><box><size>2.2 1.55 0.55</size></box></geometry>
+          <material><ambient>0.20 0.30 0.60 1</ambient><diffuse>0.20 0.30 0.60 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================================================================= -->
+    <!-- 7. YOLO COCO MODELS (PEDESTRIANS & STREET SIGN)                   -->
+    <!-- ================================================================= -->
+
+    <!-- Pedestrian 1: Walking on Center-Left Sidewalk (X=3.2m, Y=+0.15m) -->
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Standing person</uri>
+      <name>person_center_sidewalk</name>
+      <pose>3.2 0.15 0.0 0 0 -1.5708</pose>
+    </include>
+
+    <!-- Street Stop Sign at Curb Corner (X=3.6m, Y=+0.95m, facing camera) -->
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Stop Sign</uri>
+      <name>stop_sign_corner</name>
+      <pose>3.6 0.95 0.0 0 0 0.0</pose>
+    </include>
+
+    <!-- Pedestrian 2: Approaching Further Down Sidewalk (X=4.8m, Y=-0.25m) -->
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Walking person</uri>
+      <name>person_approaching</name>
+      <pose>4.8 -0.25 0.0 0 0 -1.5708</pose>
+    </include>
+
   </world>
-</sdf>
+</sdf> 
