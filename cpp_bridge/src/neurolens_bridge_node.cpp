@@ -38,7 +38,7 @@ struct HapticCommand {
 class NeuroLensBridge {
 public:
     NeuroLensBridge(int frame_width = 640,
-                    int frame_height = 480,
+                    int frame_height = 640,
                     double min_confidence = 50.0,
                     int speech_cooldown_sec = 4)
         : frame_width_(frame_width),
@@ -176,7 +176,7 @@ private:
 #ifdef USE_ROS2
 class NeuroLensRosNode : public rclcpp::Node {
 public:
-    NeuroLensRosNode() : Node("neurolens_bridge_node"), bridge_(640, 480, 50.0, 4) {
+    NeuroLensRosNode() : Node("neurolens_bridge_node"), bridge_(640, 640, 50.0, 4) {
         image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
             "/camera/image_raw", 10,
             std::bind(&NeuroLensRosNode::onCameraFrame, this, std::placeholders::_1));
@@ -242,7 +242,7 @@ int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    NeuroLensBridge bridge(640, 480, 50.0, 4);
+    NeuroLensBridge bridge(640, 640, 50.0, 4);
     std::string line;
 
     // Reads piped detection packets ("label|x|y|w|h|confidence") from stdin
